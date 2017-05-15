@@ -1,0 +1,117 @@
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:data="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8"/>
+    <title>TestTask</title>
+    <link href="bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css"
+          href="webjars/bootstrap/3.2.0/css/bootstrap.min.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+
+        function myAdd() {
+            $("#dataTable").append('<tr><td class="col-md-2 text-center"><input type="checkbox"/></td>' +
+                '<td name="name1" contenteditable="true"></td>' +
+                '<td name="name2" contenteditable="true"></td></tr>')
+
+        }
+        function myDelete() {
+            $("input:checkbox:checked").each(function () {
+                var tr = $(this).parent().parent();
+                var person = getPersonFromTr(tr);
+                var id = $(this).prop('name');
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json",
+                    url: "deletePerson",
+                    data: JSON.stringify(id),
+                    dataType: 'json',
+                    success: function (result) {
+                        tr.remove()
+                    },
+                    error: function (result) {
+                        tr.remove()
+                    }
+                });
+            });
+
+        }
+
+        function mySave() {
+            $("input:checkbox:checked").each(function () {
+                var checkbox = $(this);
+                var tr = $(this).parent().parent();
+                var person = getPersonFromTr(tr);
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json",
+                    url: "savePerson",
+                    data: JSON.stringify(person),
+                    dataType: 'json',
+                    success: function (result) {
+                        underlineRow(tr, 'green');
+                        checkbox.prop('checked', false);
+
+                    },
+                    error: function (result) {
+                        underlineRow(tr, 'red');
+                    }
+                });
+            });
+        }
+        
+        function underlineRow(tr, newColor) {
+            var oldColor = tr.css("background-color");
+            tr.children('td,th').css('background-color',newColor);
+            setTimeout(function(){
+                tr.children('td,th').css('background-color',oldColor);
+            }, 1200);
+        }
+
+        function getCheckedPersons() {
+            var personArray = [];
+            $("input:checkbox:checked").each(function () {
+                var tr = $(this).parent().parent();
+                var p = getPersonFromTr(tr);
+                personArray.push(p);
+            });
+            return personArray;
+        }
+        function getPersonFromTr(tr) {
+            var person = {
+                id:tr.find("input").prop('name'),
+                name1 : tr.find('td[name=name1]').text(),
+                name2 : tr.find('td[name=name2]').text()
+            }
+            return person;
+
+        }
+
+    </script>
+</head>
+<body>
+    <div class="container">
+        <table id="dataTable" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th class="col-md-2 text-center">Выбрать</th>
+                    <th>Имя</th>
+                    <th>Фамилия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="person : ${people}">
+                    <td class="col-md-2 text-center"><input type="checkbox" th:name="${person.id}"/></td>
+                    <td contenteditable='true' name="name1" th:text="${person.name1}"></td>
+                    <td contenteditable='true' name="name2" th:text="${person.name2}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="container">
+        <button onclick="myDelete()">Удалить</button>
+        <button onclick="myAdd()">Добавить строку</button>
+        <button onclick="mySave()">Сохранить изменения</button>
+    </div>
+</body>
+</html>
